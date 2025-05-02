@@ -37,6 +37,8 @@ SERVER_URL = os.getenv("SERVER_URL", "http://localhost:5000")
 TIME_SYNC = int(os.getenv("TIME_SYNC", 30))
 TIME_ONLINE = int(os.getenv("TIME_ONLINE", 1))
 FORCE_SYNC_LOOP = os.getenv("FORCE_SYNC_LOOP", "false").lower() == "true"
+VIDEO_MODE = os.getenv("VIDEO_MODE", "HTTP").upper()
+VIDEO_PATH = os.getenv("VIDEO_PATH", "/mnt/tv_videos")
 CLIENT_ID = socket.gethostname()
 
 print(SERVER_URL)
@@ -165,6 +167,14 @@ def manter_cache(projeto):
 download_em_andamento = threading.Lock()
 # === Baixa vídeo ===
 def baixar_video(grupo, nome, url):
+    if VIDEO_MODE == "REDE":
+        caminho = os.path.join(VIDEO_PATH, grupo, nome)
+        if not os.path.exists(caminho):
+            print(f"[{CLIENT_ID}] Arquivo não encontrado na pasta de rede: {caminho}")
+            return None
+        return caminho
+
+    # ↓↓↓ Modo HTTP ↓↓↓
     dst_path = os.path.join(CACHE_ROOT, grupo, nome)
     if os.path.exists(dst_path):
         return dst_path
@@ -173,12 +183,22 @@ def baixar_video(grupo, nome, url):
         print(f"[{CLIENT_ID}] Outro download em andamento. Ignorando novo pedido.")
         return None
 
+    # Liberação automática de segurança após X segundos
+    def forcar_liberar_download(timeout=20):
+        time.sleep(timeout)
+        if download_em_andamento.locked():
+            download_em_andamento.release()
+            print(f"[{CLIENT_ID}] ⚠️ Lock de download forçado liberado após timeout")
+
+    threading.Thread(target=forcar_liberar_download, daemon=True).start()
+
     try:
         controller.send(["loadfile", os.path.join(BASE_DIR, "carregando.mp4"), "replace"])
         try:
             sio.emit("log", {"client_id": CLIENT_ID, "msg": "Carregando vídeo..."})
         except:
             pass
+
         manter_cache(grupo)
         r = requests.get(url, stream=True)
         with open(dst_path, "wb") as f:

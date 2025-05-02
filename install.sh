@@ -18,12 +18,15 @@ read -p "👉 Digita aqui: " SERVER_URL
 
 echo "📝 Criando o .env com as configs padrão..."
 cat <<EOF > .env
-SERVER_URL=$SERVER_URL
+SERVER_URL=http://192.168.0.193:5000
 NTP_SERVER=pool.ntp.org
 NTP_TIMEOUT=2
 MAX_CACHED_PROJECTS=2
 TIME_SYNC=30
 TIME_ONLINE=1
+FORCE_SYNC_LOOP=true
+VIDEO_MODE=HTTP  # ou REDE
+VIDEO_PATH=/mnt/tv_videos  # se REDE
 EOF
 
 echo "✅ .env criado, jovem! Dá pra editar depois se precisar."
