@@ -74,10 +74,8 @@ else:
         "--no-border",
         "--force-window=yes",
         "--hwdec=mmal",
-        "--vo=rpi",
-        "--really-quiet",
         "--no-audio-display",
-        "--no-config",
+        "--really-quiet",
         f"--input-ipc-server={IPC_PATH}",
         f"--geometry={width}x{height}+{x_offset}+{y_offset}",
         BLANK_VIDEO
