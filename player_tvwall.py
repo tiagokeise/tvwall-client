@@ -77,7 +77,7 @@ else:
         "--no-audio-display",
         "--really-quiet",
         f"--input-ipc-server={IPC_PATH}",
-        f"--geometry={width}x{height}+{x_offset}+{y_offset}",
+        #f"--geometry={width}x{height}+{x_offset}+{y_offset}",
         BLANK_VIDEO
     ]
 
@@ -127,7 +127,7 @@ def get_ntp_time():
 start_at = None
 video_duration = None
 
-def drift_monitor(interval=2):
+def drift_monitor(interval=15):
     global start_at, video_duration
     ntp = ntplib.NTPClient()
     while True:
@@ -235,7 +235,7 @@ def on_play(data):
 def loop_status():
     while True:
         sio.emit("status_atual", {"client_id": CLIENT_ID, "status": "idle"})
-        time.sleep(1)
+        time.sleep(20)
 
 if __name__ == "__main__":
     try:
