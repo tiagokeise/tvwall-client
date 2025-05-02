@@ -1,0 +1,13 @@
+[Unit]
+Description=TV Wall Player Client
+After=network.target
+
+[Service]
+User=ebc
+ExecStart=/usr/bin/python3 /home/ebc/tvwall/player_tvwall.py
+WorkingDirectory=/home/ebc/tvwall
+Restart=always
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
