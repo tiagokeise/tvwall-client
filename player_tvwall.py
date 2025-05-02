@@ -5,12 +5,12 @@ import threading
 import subprocess
 import socket
 import platform
-import ntplib
+import ntplib #type: ignore
 import shutil
-import requests
-import socketio
+import requests #type: ignore
+import socketio #type: ignore
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv #type: ignore
 load_dotenv()
 
 import subprocess
@@ -24,7 +24,7 @@ except Exception as e:
 
 # Em Windows, usamos pywin32 para Named Pipes IPC
 if platform.system() == "Windows":
-    import win32file
+    import win32file #type: ignore
 
 # === CONFIG ===
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -34,6 +34,9 @@ NTP_SERVER = os.getenv("NTP_SERVER", "pool.ntp.org")
 NTP_TIMEOUT = int(os.getenv("NTP_TIMEOUT", 2))
 MAX_CACHED = int(os.getenv("MAX_CACHED_PROJECTS", 2))
 SERVER_URL = os.getenv("SERVER_URL", "http://localhost:5000")
+TIME_SYNC = int(os.getenv("TIME_SYNC", 30))
+TIME_ONLINE = int(os.getenv("TIME_ONLINE", 1))
+FORCE_SYNC_LOOP = os.getenv("FORCE_SYNC_LOOP", "false").lower() == "true"
 CLIENT_ID = socket.gethostname()
 
 print(SERVER_URL)
@@ -127,12 +130,12 @@ def get_ntp_time():
 start_at = None
 video_duration = None
 
-def drift_monitor(interval=15):
+def drift_monitor(interval=TIME_SYNC):
     global start_at, video_duration
     ntp = ntplib.NTPClient()
     while True:
-        time.sleep(interval)
         if start_at is None or video_duration is None:
+            time.sleep(interval)
             continue
         try:
             now_ntp = ntp.request(NTP_SERVER, timeout=NTP_TIMEOUT).tx_time
@@ -140,6 +143,9 @@ def drift_monitor(interval=15):
             controller.send(["seek", elapsed, "absolute"])
         except Exception as e:
             print(f"[{CLIENT_ID}] drift erro: {e}")
+        if not FORCE_SYNC_LOOP:
+            break
+        time.sleep(interval)
 
 threading.Thread(target=drift_monitor, daemon=True).start()
 
@@ -156,13 +162,24 @@ def manter_cache(projeto):
         print(f"[CACHE] Projeto removido: {grupo}")
     os.makedirs(os.path.join(CACHE_ROOT, projeto), exist_ok=True)
 
-# === Baixa vídeo
+download_em_andamento = threading.Lock()
+# === Baixa vídeo ===
 def baixar_video(grupo, nome, url):
     dst_path = os.path.join(CACHE_ROOT, grupo, nome)
     if os.path.exists(dst_path):
         return dst_path
-    manter_cache(grupo)
+
+    if not download_em_andamento.acquire(blocking=False):
+        print(f"[{CLIENT_ID}] Outro download em andamento. Ignorando novo pedido.")
+        return None
+
     try:
+        controller.send(["loadfile", os.path.join(BASE_DIR, "carregando.mp4"), "replace"])
+        try:
+            sio.emit("log", {"client_id": CLIENT_ID, "msg": "Carregando vídeo..."})
+        except:
+            pass
+        manter_cache(grupo)
         r = requests.get(url, stream=True)
         with open(dst_path, "wb") as f:
             for chunk in r.iter_content(chunk_size=8192):
@@ -172,6 +189,9 @@ def baixar_video(grupo, nome, url):
     except Exception as e:
         print(f"[{CLIENT_ID}] Falha no download: {e}")
         return None
+    finally:
+        download_em_andamento.release()
+
 
 # === Socket.IO
 sio = socketio.Client()
@@ -235,7 +255,7 @@ def on_play(data):
 def loop_status():
     while True:
         sio.emit("status_atual", {"client_id": CLIENT_ID, "status": "idle"})
-        time.sleep(20)
+        time.sleep(TIME_ONLINE)
 
 if __name__ == "__main__":
     try:

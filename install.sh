@@ -22,6 +22,8 @@ SERVER_URL=$SERVER_URL
 NTP_SERVER=pool.ntp.org
 NTP_TIMEOUT=2
 MAX_CACHED_PROJECTS=2
+TIME_SYNC=30
+TIME_ONLINE=1
 EOF
 
 echo "✅ .env criado, jovem! Dá pra editar depois se precisar."
