@@ -246,6 +246,10 @@ def connect():
 @sio.on("play")
 def on_play(data):
     print(f"[{CLIENT_ID}] play recebido: {data}")
+    if download_em_andamento.locked():
+        print(f"[{CLIENT_ID}] Ignorando play: download em andamento.")
+        return
+
     video = data.get("video")
     url = data.get("url")
     start_at = data.get("start_at")
