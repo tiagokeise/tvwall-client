@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 SERVICE_NAME=tvwall
 USER_NAME=ebc
@@ -8,7 +9,7 @@ SCRIPT_PATH="$WORK_DIR/player_tvwall.py"
 ENV_PATH="$WORK_DIR/.env"
 SERVICE_FILE="/etc/systemd/system/$SERVICE_NAME.service"
 
-echo "🛠️ Criando serviço systemd: $SERVICE_NAME..."
+echo "🛠️  Criando o serviço systemd '$SERVICE_NAME', jovem..."
 
 sudo bash -c "cat > $SERVICE_FILE" <<EOF
 [Unit]
@@ -26,10 +27,12 @@ EnvironmentFile=$ENV_PATH
 WantedBy=multi-user.target
 EOF
 
-echo "🔄 Recarregando systemd e ativando serviço..."
+echo "🔄 Recarregando o systemd, habilitando e iniciando o serviço..."
+
 sudo systemctl daemon-reexec
 sudo systemctl enable $SERVICE_NAME
 sudo systemctl restart $SERVICE_NAME
 
-echo "✅ Serviço $SERVICE_NAME instalado e iniciado."
-echo "🔍 Veja logs com: journalctl -u $SERVICE_NAME -f"
+echo "✅ Serviço '$SERVICE_NAME' configurado e rodando no boot, jovem!"
+echo "🔍 Se quiser ver os logs em tempo real, é só rodar:"
+echo "    journalctl -u $SERVICE_NAME -f"

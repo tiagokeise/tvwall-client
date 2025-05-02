@@ -1,25 +1,45 @@
 #!/bin/bash
-
 set -e
 
-echo "📦 Criando ambiente virtual..."
+echo "📦 Criando ambiente virtual, jovem..."
 python3 -m venv venv
 
-echo "🐍 Ativando ambiente virtual e instalando dependências..."
+echo "🐍 Agora vou rodar o ambiente virtual e instalar as dependências, jovem..."
 source venv/bin/activate
 pip install --upgrade pip
-pip install python-socketio flask requests websocket-client
 
-echo "✅ Dependências instaladas."
+echo "📄 Instalando as paradas do requirements.txt..."
+pip install -r requirements.txt
 
-if [ ! -f ".env" ]; then
-  echo "🌱 Criando .env de exemplo..."
-  cat <<EOF > .env
-SOCKET_SERVER=http://192.168.1.100:5000
-CLIENT_ID=tv1
+echo "✅ Dependências na mão. Agora vamos configurar o ambiente."
+
+echo "🌐 Qual é o endereço do servidor Socket.IO, jovem? (ex: http://192.168.0.193:5000)"
+read -p "👉 Digita aqui: " SERVER_URL
+
+echo "📝 Criando o .env com as configs padrão..."
+cat <<EOF > .env
+SERVER_URL=$SERVER_URL
+NTP_SERVER=pool.ntp.org
+NTP_TIMEOUT=2
+MAX_CACHED_PROJECTS=2
 EOF
-  echo "⚠️  Edite o arquivo .env para configurar o endereço do servidor e o ID deste Raspberry Pi."
+
+echo "✅ .env criado, jovem! Dá pra editar depois se precisar."
+
+if [ -f "./setup_systemd.sh" ]; then
+  echo "⚙️  Configurando o serviço no boot com o setup_systemd.sh, jovem..."
+  chmod +x setup_systemd.sh
+  ./setup_systemd.sh
+else
+  echo "❌ Jovem, não achei o setup_systemd.sh. Sem ele o serviço não vai subir no boot."
 fi
 
-echo "✅ Instalação concluída. Agora você pode iniciar com:"
-echo "  systemctl restart tvwall"
+# 🔁 Pergunta se quer reiniciar agora
+read -p "🔁 Quer reiniciar agora pra testar tudo no boot? (s/n): " resp
+if [[ "$resp" == "s" || "$resp" == "S" ]]; then
+  echo "🕓 Beleza, jovem. Espera 5 segundos e já vai!"
+  sleep 5
+  sudo reboot
+else
+  echo "👌 Então reinicia depois com 'sudo reboot'. Tá nas suas mãos, jovem!"
+fi
