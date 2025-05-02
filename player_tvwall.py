@@ -49,18 +49,40 @@ width, height = 480, 270
 x_offset = 0
 y_offset = 0
 
-MPV_CMD = [
-    "mpv",
-    "--fs",
-    "--no-terminal",
-    "--loop=inf",
-    "--idle=no",
-    "--no-border", 
-    "--force-window=yes",
-    f"--input-ipc-server={IPC_PATH}",
-    f"--geometry={width}x{height}+{x_offset}+{y_offset}",
-    BLANK_VIDEO
-]
+if platform.system() == "Windows":
+    # Configuração para Windows
+    MPV_CMD = [
+        "mpv",
+        "--fs",
+        "--no-terminal",
+        "--loop=inf",
+        "--idle=no",
+        "--no-border",
+        "--force-window=yes",
+        f"--input-ipc-server={IPC_PATH}",
+        f"--geometry={width}x{height}+{x_offset}+{y_offset}",
+        BLANK_VIDEO
+    ]
+else:
+    # Configuração para Raspberry Pi (Linux)
+    MPV_CMD = [
+        "mpv",
+        "--fs",
+        "--no-terminal",
+        "--loop=inf",
+        "--idle=no",
+        "--no-border",
+        "--force-window=yes",
+        "--hwdec=mmal",
+        "--vo=rpi",
+        "--really-quiet",
+        "--no-audio-display",
+        "--no-config",
+        f"--input-ipc-server={IPC_PATH}",
+        f"--geometry={width}x{height}+{x_offset}+{y_offset}",
+        BLANK_VIDEO
+    ]
+
 if platform.system() != "Windows" and os.path.exists(IPC_PATH):
     os.remove(IPC_PATH)
 
