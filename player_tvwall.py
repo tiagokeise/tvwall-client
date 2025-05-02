@@ -13,6 +13,15 @@ import socketio
 from dotenv import load_dotenv
 load_dotenv()
 
+import subprocess
+
+# Mata qualquer instância anterior do mpv ao iniciar o script
+try:
+    subprocess.run(["pkill", "-f", "mpv"], check=False)
+    print("🧹 mpv encerrado ao iniciar o player.")
+except Exception as e:
+    print(f"⚠️ Erro ao tentar encerrar mpv: {e}")
+
 # Em Windows, usamos pywin32 para Named Pipes IPC
 if platform.system() == "Windows":
     import win32file
