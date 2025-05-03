@@ -76,7 +76,7 @@ python3 player_tvwall.py
 
 ## 🧷 Autor
 
-Desenvolvido por [Tiago Keise](https://github.com/tiagokeise) para uso em instalações com múltiplos Raspberry Pi exibindo vídeos sincronizados.
+Desenvolvido por [Tiago Keise](https://github.com/tiagokeise) para uso em instalações com múltiplos Raspberry Pi ou windows exibindo vídeos sincronizados.
 
 ---
 
