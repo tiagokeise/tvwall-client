@@ -40,43 +40,8 @@ FORCE_SYNC_LOOP = os.getenv("FORCE_SYNC_LOOP", "false").lower() == "true"
 VIDEO_MODE = os.getenv("VIDEO_MODE", "HTTP").upper()
 VIDEO_PATH = os.getenv("VIDEO_PATH", "/mnt/tv_videos")
 CLIENT_ID = socket.gethostname()
-WIFI_SSID     = os.getenv("WIFI_SSID", "WIFI-EBC-TV")
-WIFI_PASSWORD = os.getenv("WIFI_PASSWORD", "3bcWifitv!")
-WIFI_DEVICE   = os.getenv("WIFI_DEVICE", "wlan0")      # ajuste se usar outra interface
-WIFI_CHECK    = int(os.getenv("WIFI_CHECK", TIME_SYNC))  # a cada quantos segundos testar
 
 print(SERVER_URL)
-
-def wifi_conectado() -> bool:
-    """
-    Retorna True se a interface Wi‑Fi estiver no estado 'connected'.
-    """
-    try:
-        out = subprocess.check_output(
-            ["nmcli", "-t", "-f", "DEVICE,STATE", "dev", "status"],
-            stderr=subprocess.DEVNULL
-        ).decode()
-        for line in out.strip().splitlines():
-            dev, state = line.split(":")[:2]
-            if dev == WIFI_DEVICE and state == "connected":
-                return True
-        return False
-    except Exception as e:
-        print(f"[{CLIENT_ID}] Erro ao checar Wi‑Fi: {e}")
-        return False
-
-
-def tentar_reconectar_wifi():
-    cmd = [
-        "sudo", "nmcli", "dev", "wifi", "connect",
-        WIFI_SSID, "password", WIFI_PASSWORD, "hidden", "yes"
-    ]
-    try:
-        print(f"[{CLIENT_ID}] Tentando reconectar ao Wi‑Fi…")
-        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        print(f"[{CLIENT_ID}] Wi‑Fi reconectado.")
-    except subprocess.CalledProcessError:
-        print(f"[{CLIENT_ID}] Falha na reconexão Wi‑Fi.")
 
 # === IPC Socket por OS ===
 if platform.system() == "Windows":
@@ -185,31 +150,6 @@ def drift_monitor(interval=TIME_SYNC):
         time.sleep(interval)
 
 threading.Thread(target=drift_monitor, daemon=True).start()
-
-def rede_monitor():
-    """
-    Loop que garante:
-      1. Wi‑Fi ativo — se cair, tenta reconectar.
-      2. Socket.IO conectado — se cair, tenta reconectar.
-    """
-    while True:
-        if not wifi_conectado():
-            tentar_reconectar_wifi()
-            # Espera um pouco para DHCP entregar IP
-            time.sleep(5)
-
-        # Se Wi‑Fi OK mas Socket.IO não:
-        if wifi_conectado() and (not sio.connected):
-            try:
-                print(f"[{CLIENT_ID}] Tentando reconectar ao servidor…")
-                sio.connect(SERVER_URL, wait_timeout=5)
-            except Exception as e:
-                print(f"[{CLIENT_ID}] Reconexão Socket falhou: {e}")
-
-        time.sleep(WIFI_CHECK)
-
-# thread daemon
-threading.Thread(target=rede_monitor, daemon=True).start()
 
 # === Limpa cache
 def manter_cache(projeto):
